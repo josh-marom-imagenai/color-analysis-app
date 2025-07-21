@@ -1,0 +1,57 @@
+{
+  "$schema": "https://dprint.dev/schemas/v0.json",
+  "lineWidth": 100,
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.91.6.wasm"
+  ],
+  "includes": [
+    "**/*.{ts,tsx,js,jsx}"
+  ],
+  "excludes": [
+    "node_modules",
+    "dist",
+    "build"
+  ],
+  "typescript": {
+    "lineWidth": 100,
+    "indentWidth": 4,
+    "useTabs": false,
+    "semiColons": "always",
+    "quoteStyle": "preferSingle",
+    "newLineKind": "lf",
+    "useBraces": "whenNotSingleLine",
+    "bracePosition": "sameLineUnlessHanging",
+    "singleBodyPosition": "maintain",
+    "nextControlFlowPosition": "nextLine",
+    "trailingCommas": "onlyMultiLine",
+    "operatorPosition": "nextLine",
+    "preferSingleLine": false,
+    "deno": false,
+    "arrowFunction.useParentheses": "preferNone",
+    "conditionalExpression.linePerExpression": false,
+    "memberExpression.linePerExpression": false,
+    "typeLiteral.separatorKind": "semiColon",
+    "enumDeclaration.memberSpacing": "maintain",
+    "spaceAround": false,
+    "spaceSurroundingProperties": true,
+    "quoteProps": "asNeeded",
+    "jsx.bracketPosition": "nextLine",
+    "jsx.forceNewLinesSurroundingContent": false,
+    "jsx.quoteStyle": "preferDouble",
+    "importDeclaration.spaceSurroundingNamedImports": true,
+    "exportDeclaration.spaceSurroundingNamedExports": true,
+    "functionExpression.spaceAfterFunctionKeyword": false,
+    "constructor.spaceBeforeParentheses": false,
+    "constructorType.spaceAfterNewKeyword": false,
+    "constructSignature.spaceAfterNewKeyword": false,
+    "getAccessor.spaceBeforeParentheses": false,
+    "setAccessor.spaceBeforeParentheses": false,
+    "functionDeclaration.spaceBeforeParentheses": false,
+    "method.spaceBeforeParentheses": false,
+    "ifStatement.spaceAfterIfKeyword": true,
+    "whileStatement.spaceAfterWhileKeyword": true,
+    "forStatement.spaceAfterForKeyword": true,
+    "forInStatement.spaceAfterForKeyword": true,
+    "forOfStatement.spaceAfterForKeyword": true
+  }
+} 
