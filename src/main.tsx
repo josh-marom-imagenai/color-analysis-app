@@ -1,4 +1,4 @@
-import { MantineProvider } from '@mantine/core';
+import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/charts/styles.css';
@@ -11,6 +11,7 @@ import App from './App.tsx';
 import './index.css';
 import {
     ColorPalettePage,
+    ColorSchemeGeneratorPage,
     ColorWheelPage,
     ConflictsAnalysisPage,
     DashboardPage,
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
                 element: <ConflictsAnalysisPage />,
             },
             {
+                path: 'scheme-generator',
+                element: <ColorSchemeGeneratorPage />,
+            },
+            {
                 path: 'upload',
                 element: <UploadPage />,
             },
@@ -55,9 +60,21 @@ const router = createBrowserRouter([
     },
 ]);
 
+const theme = createTheme({
+    components: {
+        Modal: {
+            styles: {
+                inner: {
+                    left: 0,
+                },
+            },
+        },
+    },
+});
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <MantineProvider>
+        <MantineProvider theme={theme}>
             <Notifications />
             <RouterProvider router={router} />
         </MantineProvider>

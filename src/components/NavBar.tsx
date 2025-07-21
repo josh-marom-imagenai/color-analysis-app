@@ -1,54 +1,18 @@
 import { NavLink, Stack } from '@mantine/core';
-import {
-    IconAnalyze,
-    IconChartBar,
-    IconCircle,
-    IconColorSwatch,
-    IconPalette,
-} from '@tabler/icons-react';
-import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
+import { A } from '@mobily/ts-belt';
+import { NavLink as RouterNavLink } from 'react-router-dom';
+import type { NavItem } from '../navigation';
 
 interface NavBarProps {
-    readonly hasData: boolean;
+    readonly navItems: NavItem[];
+    readonly currentPath: string;
 }
 
-export const NavBar = ({ hasData }: NavBarProps) => {
-    const location = useLocation();
-
-    if (!hasData) {
-        return null;
-    }
-
-    const navItems = [
-        {
-            to: '/',
-            label: 'Dashboard',
-            icon: <IconChartBar size={16} />,
-        },
-        {
-            to: '/palette',
-            label: 'Color Palette',
-            icon: <IconPalette size={16} />,
-        },
-        {
-            to: '/usage',
-            label: 'Usage Analysis',
-            icon: <IconColorSwatch size={16} />,
-        },
-        {
-            to: '/wheel',
-            label: 'Color Wheel',
-            icon: <IconCircle size={16} />,
-        },
-        {
-            to: '/conflicts',
-            label: 'Analysis',
-            icon: <IconAnalyze size={16} />,
-        },
-    ];
+export const NavBar = ({ navItems, currentPath }: NavBarProps) => {
+    if (A.isEmpty(navItems)) return null;
 
     return (
-        <Stack gap="xs" p="md">
+        <Stack gap="xs" p="sm">
             {navItems.map(item => (
                 <NavLink
                     key={item.to}
@@ -56,7 +20,7 @@ export const NavBar = ({ hasData }: NavBarProps) => {
                     to={item.to}
                     label={item.label}
                     leftSection={item.icon}
-                    active={location.pathname === item.to}
+                    active={currentPath === item.to}
                 />
             ))}
         </Stack>

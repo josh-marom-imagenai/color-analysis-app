@@ -19,6 +19,11 @@ import { IconSearch } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import type { ColorData, ColorDataMap } from '../types/color';
 import {
+    type ColorMatch,
+    type ColorSchemeAnalysis,
+    findClosestSchemeColor,
+} from '../utils/colorSchemeGenerator';
+import {
     filterColors,
     generateColorInfo,
     getAvailableCategories,
@@ -28,6 +33,12 @@ import { ColorSwatch } from './ColorSwatch';
 
 interface ColorPaletteProps {
     colorData: ColorDataMap;
+    schemeAnalysis?: ColorSchemeAnalysis;
+}
+
+interface ColorWithCompatibility extends ColorData {
+    schemeDistance?: number;
+    schemeMatch?: ColorMatch;
 }
 
 interface ColorSwatchWrapperProps {
@@ -71,25 +82,31 @@ interface ColorDetailModalProps {
     color: ColorData | null;
     opened: boolean;
     onClose: () => void;
+    schemeAnalysis?: ColorSchemeAnalysis;
 }
 
-const ColorDetailModal = ({ color, opened, onClose }: ColorDetailModalProps) => {
+const ColorDetailModal = ({ color, opened, onClose, schemeAnalysis }: ColorDetailModalProps) => {
+    const closestSchemeMatch = useMemo(() => {
+        if (!schemeAnalysis || !color) return null;
+
+        return findClosestSchemeColor(color.hexValue, schemeAnalysis);
+    }, [color, schemeAnalysis]);
+
+    const getMatchQuality = useCallback((distance: number) => {
+        if (distance < 30) return { color: 'green', label: 'Excellent Match' };
+
+        if (distance < 80) return { color: 'yellow', label: 'Good Match' };
+
+        return { color: 'red', label: 'Fair Match' };
+    }, []);
+
     if (!color) return null;
 
     const info = generateColorInfo(color);
+    const matchQuality = closestSchemeMatch ? getMatchQuality(closestSchemeMatch.distance) : null;
 
     return (
-        <Modal
-            opened={opened}
-            onClose={onClose}
-            title="Color Details"
-            size="lg"
-            styles={{
-                inner: {
-                    left: 0,
-                },
-            }}
-        >
+        <Modal opened={opened} onClose={onClose} title="Color Details" size="lg">
             <Stack>
                 <Group align="flex-start" gap="lg">
                     <ColorSwatch color={color.hexValue} size="xl" />
@@ -114,6 +131,50 @@ const ColorDetailModal = ({ color, opened, onClose }: ColorDetailModalProps) => 
                         )}
                     </Group>
                 </Group>
+
+                {closestSchemeMatch && (
+                    <>
+                        <Divider />
+                        <div>
+                            <Title order={5} mb="sm">
+                                Recommended Scheme Color
+                            </Title>
+                            <Paper p="md" withBorder bg="blue.0">
+                                <Group gap="md">
+                                    <ColorSwatch color={closestSchemeMatch.color} size="lg" />
+                                    <Box flex={1}>
+                                        <Group gap="xs" mb="xs">
+                                            <Text fw={500} ff="monospace">
+                                                {closestSchemeMatch.color}
+                                            </Text>
+                                            <Badge variant="light" color="blue">
+                                                {closestSchemeMatch.colorName}
+                                            </Badge>
+                                        </Group>
+                                        <Text size="sm" c="dimmed" mb="xs">
+                                            {closestSchemeMatch.schemeName} scheme, shade{' '}
+                                            {closestSchemeMatch.shade}
+                                        </Text>
+                                        <Group gap="xs">
+                                            <Text size="xs" c="dimmed">
+                                                Distance: {closestSchemeMatch.distance.toFixed(1)}
+                                            </Text>
+                                            {matchQuality && (
+                                                <Badge size="xs" color={matchQuality.color}>
+                                                    {matchQuality.label}
+                                                </Badge>
+                                            )}
+                                        </Group>
+                                        <Code mt="sm" block>
+                                            --color-{closestSchemeMatch.hue}-{closestSchemeMatch
+                                                .shade}
+                                        </Code>
+                                    </Box>
+                                </Group>
+                            </Paper>
+                        </div>
+                    </>
+                )}
 
                 <SimpleGrid cols={2}>
                     {/* Representations */}
@@ -215,20 +276,47 @@ const ColorDetailModal = ({ color, opened, onClose }: ColorDetailModalProps) => 
     );
 };
 
-export const ColorPalette = ({ colorData }: ColorPaletteProps) => {
+export const ColorPalette = ({ colorData, schemeAnalysis }: ColorPaletteProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('');
-    const [sortBy, setSortBy] = useState<'hue' | 'category' | 'usage' | 'hex'>('hue');
+    const [sortBy, setSortBy] = useState<
+        'hue' | 'category' | 'usage' | 'hex' | 'scheme-compatibility'
+    >('hue');
     const [selectedColor, setSelectedColor] = useState<ColorData | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
 
     const colors = Object.values(colorData);
 
-    const filteredAndSortedColors = useMemo(() => {
-        const filtered = filterColors(colors, searchTerm, categoryFilter);
+    // Calculate scheme compatibility for sorting
+    const colorsWithCompatibility = useMemo(() => {
+        if (!schemeAnalysis) return colors;
 
-        return sortColors(filtered, sortBy);
-    }, [colors, searchTerm, categoryFilter, sortBy]);
+        return colors.map(color => {
+            const match = findClosestSchemeColor(color.hexValue, schemeAnalysis);
+
+            return {
+                ...color,
+                schemeDistance: match.distance,
+                schemeMatch: match,
+            } as ColorWithCompatibility;
+        });
+    }, [colors, schemeAnalysis]);
+
+    const filteredAndSortedColors = useMemo(() => {
+        const filtered = filterColors(
+            colorsWithCompatibility as ColorData[],
+            searchTerm,
+            categoryFilter,
+        ) as ColorWithCompatibility[];
+
+        if (sortBy === 'scheme-compatibility') {
+            return filtered.sort((a, b) =>
+                (a.schemeDistance || Infinity) - (b.schemeDistance || Infinity)
+            );
+        }
+
+        return sortColors(filtered as ColorData[], sortBy) as ColorWithCompatibility[];
+    }, [colorsWithCompatibility, searchTerm, categoryFilter, sortBy]);
 
     const handleColorClick = useCallback((color: ColorData) => {
         setSelectedColor(color);
@@ -257,7 +345,9 @@ export const ColorPalette = ({ colorData }: ColorPaletteProps) => {
         { value: 'category', label: 'Category' },
         { value: 'usage', label: 'Usage' },
         { value: 'hex', label: 'Hex Value' },
-    ], []);
+        ...(schemeAnalysis ? [{ value: 'scheme-compatibility', label: 'Scheme Compatibility' }]
+            : []),
+    ], [schemeAnalysis]);
 
     return (
         <Stack gap="lg">
@@ -325,6 +415,7 @@ export const ColorPalette = ({ colorData }: ColorPaletteProps) => {
                 color={selectedColor}
                 opened={modalOpened}
                 onClose={handleModalClose}
+                schemeAnalysis={schemeAnalysis}
             />
         </Stack>
     );

@@ -1,14 +1,17 @@
-import { AppShell, Container, Group, Text, Title } from '@mantine/core';
+import { AppShell, Container, Group, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconBrandGithub } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { NavBar } from './components/NavBar';
+import { useNavigation } from './navigation';
 import type { ColorDataMap } from './types/color';
 
 const App = () => {
     const [colorData, setColorData] = useState<ColorDataMap | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const { navItems, currentPath } = useNavigation();
 
     const handleFileUpload = useCallback((data: ColorDataMap) => {
         setColorData(data);
@@ -45,20 +48,21 @@ const App = () => {
             }}
         >
             <AppShell.Header>
-                <Container size="xl" py="md">
+                <Stack gap="0" px="md" h="100%" justify="center">
                     <Group>
-                        <Title size="h1">
-                            🎨 Color Analysis Viewer
+                        <IconBrandGithub size={24} />
+                        <Title size="h2" mt="0" mb="0">
+                            Color Analysis Viewer
                         </Title>
-                        <Text c="dimmed" size="lg" mt="xs">
-                            Analyze and visualize color usage patterns in your codebase
-                        </Text>
                     </Group>
-                </Container>
+                    <Text c="dimmed" size="sm">
+                        Analyze and visualize color usage patterns in your codebase
+                    </Text>
+                </Stack>
             </AppShell.Header>
 
             <AppShell.Navbar>
-                <NavBar hasData={Boolean(colorData)} />
+                <NavBar navItems={navItems} currentPath={currentPath} />
             </AppShell.Navbar>
 
             <AppShell.Main w="100vw">
